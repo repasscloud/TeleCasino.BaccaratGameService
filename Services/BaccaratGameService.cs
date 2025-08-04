@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using NanoidDotNet;
 using SkiaSharp;
 using Svg.Skia;
@@ -13,7 +14,6 @@ public class BaccaratGameService : IBaccaratGameService
     private readonly string _htmlDir;
     private const int Width = 400;
     private const int Height = 300;
-    private static readonly Random Rand = new();
     private static readonly string FramesSubDir = "frames";
     private static readonly string VideosSubDir = "videos";
     private static readonly string ImagesSubDir = "images";
@@ -95,9 +95,10 @@ public class BaccaratGameService : IBaccaratGameService
 
     private static BaccaratResult PlayBaccarat(string spinId, string bet, int wager, int gameSessionId, Dictionary<string, SKSvg> svgs)
     {
+        // Shuffle deck using cryptographic randomness
         var deck = svgs.Keys
             .Where(k => k != "back")
-            .OrderBy(_ => Rand.Next())
+            .OrderBy(_ => GetCryptoRandomInt())
             .ToList();
 
         if (deck.Count < 6)
@@ -172,7 +173,9 @@ public class BaccaratGameService : IBaccaratGameService
             Payout = payout,
             NetGain = netGain,
             VideoFile = string.Empty,
-            Win = netGain > 0,
+            Win = netGain > 0
+                    ? true
+                    : false,
             BetType = betTypeEnum,
             PlayerCards = player,
             BankerCards = banker,
@@ -181,6 +184,14 @@ public class BaccaratGameService : IBaccaratGameService
             Winner = winnerTypeEnum,
             GameSessionId = gameSessionId,
         };
+    }
+
+    // cryptographically secure random int
+    private static int GetCryptoRandomInt()
+    {
+        var bytes = new byte[4];
+        RandomNumberGenerator.Fill(bytes);
+        return BitConverter.ToInt32(bytes, 0) & int.MaxValue;
     }
 
     private static int CardValue(string name)
@@ -280,7 +291,6 @@ public class BaccaratGameService : IBaccaratGameService
             return 1;
         }
 
-        // Read logs (optional for debugging)
         ffProc.OutputDataReceived += (_, e) => { if (e.Data != null) Console.WriteLine(e.Data); };
         ffProc.ErrorDataReceived += (_, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); };
         ffProc.BeginOutputReadLine();
