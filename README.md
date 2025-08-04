@@ -1,7 +1,7 @@
 # TeleCasino Baccarat Game API
 
-[![Build and Test BaccaratGameService](https://github.com/repasscloud/TeleCasino.BaccaratGameService/actions/workflows/test-baccarat-api.yml/badge.svg)](https://github.com/repasscloud/TeleCasino.BaccaratGameService/actions/workflows/test-baccarat-api.yml)
-[![🚀 Publish TeleCasino.KenoGameService (linux-x64)](https://github.com/repasscloud/TeleCasino.BaccaratGameService/actions/workflows/docker-image.yml/badge.svg)](https://github.com/repasscloud/TeleCasino.BaccaratGameService/actions/workflows/docker-image.yml)
+[![🧪 Test API in Docker](https://github.com/repasscloud/TeleCasino.BaccaratGameService/actions/workflows/test-api.yml/badge.svg)](https://github.com/repasscloud/TeleCasino.BaccaratGameService/actions/workflows/test-api.yml)
+[![🚀 Publish Docker Container (linux-x64)](https://github.com/repasscloud/TeleCasino.BaccaratGameService/actions/workflows/docker-image.yml/badge.svg)](https://github.com/repasscloud/TeleCasino.BaccaratGameService/actions/workflows/docker-image.yml)
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/repasscloud/TeleCasino.BaccaratGameService?label=version)
 
 A REST API service for simulating Baccarat games, generating results, and preparing video animation files.  
