@@ -59,7 +59,7 @@ public class BaccaratGameService : IBaccaratGameService
             File.Move(videoFile, finalVideoPath, overwrite: true);
 
             // cleanup
-            Directory.Delete(tmpDir, true);
+            Directory.Delete(Path.Combine(baccaratSharedRootPath, baccaratResultId), true);
         }
 
         return result;
@@ -172,7 +172,7 @@ public class BaccaratGameService : IBaccaratGameService
             Wager = wager,
             Payout = payout,
             NetGain = netGain,
-            VideoFile = string.Empty,
+            VideoFile = $"{spinId}.mp4",
             Win = netGain > 0
                     ? true
                     : false,
