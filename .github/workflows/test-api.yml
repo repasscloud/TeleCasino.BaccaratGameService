@@ -46,3 +46,76 @@ jobs:
       - name: 🗑️ Remove container
         if: always()
         run: docker rm $GAME
+
+
+  create-and-merge-pr:
+    name: 🔀 Create & Merge PR (dev → main)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔀 Create Pull Request
+        id: cpr
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: "dev"
+          destination_branch: "main"
+          github_token: ${{ secrets.NEW_PAT }}
+          pr_title: "🔀 Merge dev → main"
+          pr_body: "Automated PR to merge dev into main after successful tests."
+          pr_label: "auto-merge"
+
+      - name: ✅ Merge Pull Request
+        if: steps.cpr.outputs.pr_number != ''
+        run: |
+          gh pr merge ${{ steps.cpr.outputs.pr_number }} --merge
+        env:
+          GITHUB_TOKEN: ${{ secrets.NEW_PAT }}
+
+  check-and-tag-release:
+    name: 🏷️ Tag Release if Needed
+    needs: create-and-merge-pr
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for git tag to work
+
+      - name: 🧾 Read app_version
+        id: app_version
+        run: echo "value=$(head -n 1 app_version)" >> $GITHUB_OUTPUT
+
+      - name: 🔎 Get Latest GitHub Release
+        id: latest_release
+        run: |
+          # Get the redirect location for the latest release
+          latest_url=$(curl -sI https://github.com/repasscloud/TeleCasino.BaccaratGameService/releases/latest | grep -i location | awk '{print $2}' | tr -d '\r\n')
+          # Extract the version from the redirect URL
+          latest_version=$(basename "$latest_url" | sed 's/^v//')
+          echo "url=$latest_url" >> $GITHUB_OUTPUT
+          echo "version=$latest_version" >> $GITHUB_OUTPUT
+
+      - name: 🧠 Compare and Tag if Needed
+        if: steps.app_version.outputs.value != steps.latest_release.outputs.version
+        env:
+          APP_VERSION: ${{ steps.app_version.outputs.value }}
+        run: |
+          echo "Tagging new version v$APP_VERSION..."
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.NEW_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/repasscloud/TeleCasino.BaccaratGameService/git/refs \
+            -d @- <<EOF
+          {
+            "ref": "refs/tags/v${APP_VERSION}",
+            "sha": "$(git rev-parse HEAD)"
+          }
+          EOF

@@ -24,7 +24,7 @@ public class BaccaratGameService : IBaccaratGameService
         _htmlDir = config["HtmlDir"] ?? "/app/wwwroot";
     }
 
-    public async Task<BaccaratResult> PlayGameAsync(int wager, string betArg, int gameSessionId)
+    public async Task<BaccaratResult> PlayGameAsync(decimal wager, string betArg, int gameSessionId)
     {
         var baccaratResultId = await Nanoid.GenerateAsync();
         var baccaratSharedRootPath = Path.Combine(_sharedDir, "Baccarat");
@@ -93,7 +93,7 @@ public class BaccaratGameService : IBaccaratGameService
         });
     }
 
-    private static BaccaratResult PlayBaccarat(string spinId, string bet, int wager, int gameSessionId, Dictionary<string, SKSvg> svgs)
+    private static BaccaratResult PlayBaccarat(string spinId, string bet, decimal wager, int gameSessionId, Dictionary<string, SKSvg> svgs)
     {
         // Shuffle deck using cryptographic randomness
         var deck = svgs.Keys
@@ -144,25 +144,24 @@ public class BaccaratGameService : IBaccaratGameService
                 ? "banker"
                 : "tie";
 
-        decimal payout = winner == bet
-            ? winner switch
+        // Calculate payout with decimal-friendly rounding to 2dp
+        decimal payout = 0m;
+        if (winner == bet)
+        {
+            payout = winner switch
             {
-                "player" => wager,
+                "player" => Math.Round(wager * 1.00m, 2),
                 "banker" => Math.Round(wager * 0.95m, 2),
-                "tie" => wager * 8,
+                "tie"    => Math.Round(wager * 8.00m, 2),
                 _ => 0m
-            }
-            : 0m;
+            };
+        }
 
         if (!Enum.TryParse<BaccaratBetType>(bet, true, out var betTypeEnum))
-        {
             throw new Exception($"Unknown bet type '{bet}'");
-        }
 
         if (!Enum.TryParse<BaccaratBetType>(winner, true, out var winnerTypeEnum))
-        {
             throw new Exception($"Unknown winner type '{winner}'");
-        }
 
         var netGain = payout - wager;
 

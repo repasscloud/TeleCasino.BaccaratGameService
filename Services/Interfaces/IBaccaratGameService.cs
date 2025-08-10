@@ -4,5 +4,5 @@ namespace TeleCasino.BaccaratGameService.Services.Interface;
 
 public interface IBaccaratGameService
 {
-    Task<BaccaratResult> PlayGameAsync(int wager, string betArg, int gameSessionId);
+    Task<BaccaratResult> PlayGameAsync(decimal wager, string betArg, int gameSessionId);
 }
